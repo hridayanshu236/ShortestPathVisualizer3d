@@ -1,11 +1,10 @@
 #include "Camera.h"
-#include <algorithm>
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-    : Front(glm::vec3(0.0f, -0.5f, -1.0f))
-    , MovementSpeed(5.0f)
-    , MouseSensitivity(0.1f)
-    , Zoom(45.0f)
+    : Front(glm::vec3(0.0f, 0.0f, -1.0f)),
+    MovementSpeed(SPEED),
+    MouseSensitivity(SENSITIVITY),
+    Zoom(ZOOM)
 {
     Position = position;
     WorldUp = up;
@@ -19,7 +18,7 @@ glm::mat4 Camera::GetViewMatrix()
     return glm::lookAt(Position, Position + Front, Up);
 }
 
-void Camera::ProcessKeyboard(int direction, float deltaTime)
+void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
     float velocity = MovementSpeed * deltaTime;
 
@@ -41,7 +40,7 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
     Yaw += xoffset;
     Pitch += yoffset;
 
-    // Constrain pitch
+    // Constrain pitch to prevent screen flip
     if (constrainPitch)
     {
         if (Pitch > 89.0f)
@@ -50,29 +49,30 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
             Pitch = -89.0f;
     }
 
+    // Update Front, Right and Up Vectors
     updateCameraVectors();
 }
 
 void Camera::ProcessMouseScroll(float yoffset)
 {
-    Zoom -= yoffset * 2.0f;
+    Zoom -= yoffset;
 
     if (Zoom < 1.0f)
         Zoom = 1.0f;
-    if (Zoom > 90.0f)
-        Zoom = 90.0f;
+    if (Zoom > 45.0f)
+        Zoom = 45.0f;
 }
 
 void Camera::updateCameraVectors()
 {
-    // Calculate new Front vector
+    // Calculate the new Front vector
     glm::vec3 front;
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     front.y = sin(glm::radians(Pitch));
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     Front = glm::normalize(front);
 
-    // Recalculate Right and Up vectors
+    // Recalculate the Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));
     Up = glm::normalize(glm::cross(Right, Front));
 }

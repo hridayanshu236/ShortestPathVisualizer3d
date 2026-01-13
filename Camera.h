@@ -1,9 +1,24 @@
-#pragma once
+﻿#pragma once
 #ifndef CAMERA_H
 #define CAMERA_H
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+// Camera movement directions
+enum Camera_Movement {
+    FORWARD,
+    BACKWARD,
+    LEFT,
+    RIGHT
+};
+
+// Default camera values
+const float YAW = -90.0f;
+const float PITCH = -20.0f;
+const float SPEED = 10.0f;
+const float SENSITIVITY = 0.1f;
+const float ZOOM = 45.0f;
 
 class Camera
 {
@@ -24,17 +39,17 @@ public:
     float MouseSensitivity;
     float Zoom;
 
-    // Constructor
-    Camera(glm::vec3 position = glm::vec3(0.0f, 8.0f, 15.0f),
+    // Constructor - Default position shows credit wall!
+    Camera(glm::vec3 position = glm::vec3(0.0f, 15.0f, 25.0f),  // ← Changed for credit wall view
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-        float yaw = -90.0f,
-        float pitch = -30.0f);
+        float yaw = YAW,
+        float pitch = PITCH);
 
     // Get view matrix
     glm::mat4 GetViewMatrix();
 
     // Process keyboard input
-    void ProcessKeyboard(int direction, float deltaTime);
+    void ProcessKeyboard(Camera_Movement direction, float deltaTime);
 
     // Process mouse movement
     void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
@@ -45,14 +60,6 @@ public:
 private:
     // Update camera vectors
     void updateCameraVectors();
-};
-
-// Camera movement directions
-enum Camera_Movement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT
 };
 
 #endif

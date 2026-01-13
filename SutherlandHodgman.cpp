@@ -13,7 +13,7 @@ std::vector<glm::vec2> SutherlandHodgman::ClipPolygon(
     // Clip against left edge
     output = ClipAgainstEdge(output,
         glm::vec2(minBound.x, minBound.y),
-        glm::vec2(minBound.x, maxBound.y));
+        glm::vec2(minBound.x, maxBound.y));we
 
     // Clip against right edge
     output = ClipAgainstEdge(output,

@@ -11,21 +11,24 @@
 #include "Grid.h"
 #include "Shader.h"
 #include "Raycast.h"
-#include "UI.h"  // NEW! 
+#include "CreditWall.h"
+#include "UI.h"  
 
 // Window settings
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
 // Actual current window size (updates on resize)
-int currentWidth = SCR_WIDTH;   // ADD THIS
-int currentHeight = SCR_HEIGHT; // ADD THIS
+int currentWidth = SCR_WIDTH;
+int currentHeight = SCR_HEIGHT;
 
 // Global objects
 Camera camera;
 Grid grid;
-UI ui;  // NEW!
-Pathfinding pathfinding(&grid);  // ADD THIS
+UI ui;
+CreditWall* creditWall = nullptr;  // Pointer for proper initialization
+Pathfinding pathfinding(&grid);
+
 // Timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -45,6 +48,20 @@ void processInput(GLFWwindow* window);
 
 int main()
 {
+    // Startup message
+    std::cout << "\n";
+    std::cout << "================================================\n";
+    std::cout << "   3D PATHFINDING VISUALIZER                   \n";
+    std::cout << "                                               \n";
+    std::cout << "   Developed with <3 by:                        \n";
+    std::cout << "      * Hridayanshu                            \n";
+    std::cout << "      * Sumira                                 \n";
+    std::cout << "                                               \n";
+    std::cout << "   Click any tile to begin!                     \n";
+    std::cout << "================================================\n";
+    std::cout << "\n";
+
+
     // Initialize GLFW
     if (!glfwInit())
     {
@@ -90,15 +107,20 @@ int main()
         std::cerr << "Failed to initialize UI" << std::endl;
         return -1;
     }
-    ui.SetGrid(&grid);  // ← ADD THIS LINE! 
+    ui.SetGrid(&grid);
 
     std::cout << "UI initialized successfully!" << std::endl;
+
     // OpenGL settings
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);  // ← ADD THIS LINE
+    glEnable(GL_MULTISAMPLE);
 
     // Create shader
     Shader shader(ShaderSource::VertexShader, ShaderSource::FragmentShader);
+
+    // Create credit wall AFTER OpenGL context is ready
+    creditWall = new CreditWall();
+    std::cout << "Credit wall initialized!" << std::endl;
 
     // Create grid lines
     std::vector<float> gridVertices;
@@ -119,7 +141,8 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, gridVertices.size() * sizeof(float), gridVertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // Create tile geometry WITH NORMALS (position + normal = 6 floats per vertex)
+
+    // Create tile geometry WITH NORMALS
     float tileVertices[] = {
         // Positions          // Normals
         // Top face (Y+)
@@ -182,7 +205,7 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // Normal attribute (NEW!)
+    // Normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
@@ -197,6 +220,7 @@ int main()
         lastFrame = currentFrame;
 
         processInput(window);
+
         // Update pathfinding animation
         pathfinding.Update(deltaTime);
 
@@ -214,9 +238,13 @@ int main()
 
         if (ui.ShouldRunDijkstra())
         {
-            // Clear previous pathfinding results (keep obstacles/start/goal)
-            pathfinding.Reset();  // This clears VISITED and PATH tiles
+            // Hide credit wall when algorithm starts
+            if (creditWall && creditWall->IsVisible())
+            {
+                creditWall->Hide();
+            }
 
+            pathfinding.Reset();
             int sx, sz, gx, gz;
             grid.GetStart(sx, sz);
             grid.GetGoal(gx, gz);
@@ -227,9 +255,13 @@ int main()
 
         if (ui.ShouldRunAStar())
         {
-            // Clear previous pathfinding results (keep obstacles/start/goal)
-            pathfinding.Reset();  // ←This clears VISITED and PATH tiles
+            // Hide credit wall when algorithm starts
+            if (creditWall && creditWall->IsVisible())
+            {
+                creditWall->Hide();
+            }
 
+            pathfinding.Reset();
             int sx, sz, gx, gz;
             grid.GetStart(sx, sz);
             grid.GetGoal(gx, gz);
@@ -278,25 +310,6 @@ int main()
         {
             ui.SetStatus("No path exists!");
         }
-        // Handle UI requests
-        if (ui.ShouldClearGrid())
-        {
-            grid.ClearGrid();
-            ui.SetStatus("Grid cleared");
-            ui.ResetRequests();
-        }
-
-        if (ui.ShouldRunDijkstra())
-        {
-            ui.SetStatus("Running Dijkstra...  (not implemented yet)");
-            ui.ResetRequests();
-        }
-
-        if (ui.ShouldRunAStar())
-        {
-            ui.SetStatus("Running A*... (not implemented yet)");
-            ui.ResetRequests();
-        }
 
         // Update UI stats
         int obstacleCount = 0;
@@ -315,19 +328,25 @@ int main()
 
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
-            (float)currentWidth / (float)currentHeight,  // ← Use current size! 
+            (float)currentWidth / (float)currentHeight,
             0.1f, 100.0f);
 
         shader.SetMat4("view", glm::value_ptr(view));
         shader.SetMat4("projection", glm::value_ptr(projection));
 
-        // ===== ADD GOURAUD LIGHTING UNIFORMS HERE ===== 
+        // Set Gouraud lighting uniforms
         shader.SetVec3("lightPos", ui.GetLightPosition());
         shader.SetVec3("viewPos", camera.Position);
         shader.SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
         shader.SetFloat("ambientStrength", ui.GetAmbientStrength());
         shader.SetFloat("specularStrength", ui.GetSpecularStrength());
         shader.SetFloat("shininess", ui.GetShininess());
+
+        // Render credit wall FIRST (behind everything)
+        if (creditWall && creditWall->IsVisible())
+        {
+            creditWall->Render(shader);
+        }
 
         // Draw tiles
         glBindVertexArray(tileVAO);
@@ -362,6 +381,7 @@ int main()
     }
 
     // Cleanup
+    delete creditWall;
     ui.Shutdown();
     glDeleteVertexArrays(1, &tileVAO);
     glDeleteBuffers(1, &tileVBO);
@@ -401,8 +421,6 @@ void processInput(GLFWwindow* window)
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
-
-    // Update global window size variables
     currentWidth = width;
     currentHeight = height;
 }
@@ -428,33 +446,37 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    // Check if ImGui wants to capture mouse (cursor over UI)
     ImGuiIO& io = ImGui::GetIO();
     if (io.WantCaptureMouse)
-        return;  // Don't zoom camera if scrolling in UI
+        return;
 
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    // Check if ImGui wants to capture mouse
     ImGuiIO& io = ImGui::GetIO();
     if (io.WantCaptureMouse)
         return;
 
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && cursorEnabled)
     {
+        // Hide credit wall on first click
+        if (creditWall && creditWall->IsVisible())
+        {
+            creditWall->Hide();
+        }
+
         double mouseX, mouseY;
         glfwGetCursorPos(window, &mouseX, &mouseY);
 
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
-            (float)currentWidth / (float)currentHeight,  // ← Use current size!
+            (float)currentWidth / (float)currentHeight,
             0.1f, 100.0f);
 
         int x, z;
-        if (Raycast::GetClickedTile(mouseX, mouseY, currentWidth, currentHeight,  // ← Use current size!
+        if (Raycast::GetClickedTile(mouseX, mouseY, currentWidth, currentHeight,
             camera.Position, view, projection, x, z))
         {
             EditMode mode = ui.GetCurrentMode();
