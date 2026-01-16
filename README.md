@@ -104,7 +104,7 @@ Visualize Dijkstra's and A algorithms in beautiful 3D with customizable lighting
 
 ## System Architecture
 
-mermaid
+```mermaid
 graph TB
     subgraph "Input Layer"
         A[Mouse/Keyboard Input]
@@ -145,6 +145,7 @@ graph TB
     F --> K --> L
     E --> M
     C --> N
+```
 
 *Key Components:*
 - *Main Loop*: Coordinates all system components at 60 FPS
