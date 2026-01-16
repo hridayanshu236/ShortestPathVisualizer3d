@@ -317,8 +317,9 @@ float Heuristic(int x1, int z1, int x2, int z2) {
 
 | Developer | Role | Contribution |
 |-----------|------|--------------|
-| Hridayanshu Raj Acharya | Core Developer | Graphics Pipeline, Shading, Camera System |
-| Sumira Makaju | Core Developer | Pathfinding Algorithms, UI System, Grid Management |
+| [Hridayanshu Raj Acharya](https://github.com/hridayanshu236) | Core Developer | Graphics Pipeline, Shading, Camera System |
+| [Sumira Makaju](https://github.com/SumiraMakaju) | Core Developer | Pathfinding Algorithms, UI System, Grid Management |
+
 
 *Department:* Computer Science and Engineering  
 *University:* Kathmandu University, Dhulikhel, Kavre  
