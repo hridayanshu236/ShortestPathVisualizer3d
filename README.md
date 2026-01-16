@@ -106,45 +106,80 @@
 
 ```mermaid
 graph TB
-    subgraph "Input Layer"
-        A[Mouse/Keyboard Input]
-        B[ImGui Interface]
+    %% ===== INPUT LAYER =====
+    subgraph "User Input Layer"
+        UI[ImGui Interface]
+        MI[Mouse Input]
+        KI[Keyboard Input]
     end
     
-    subgraph "Core Engine"
-        C[Main Application Loop]
-        D[Grid Management System]
-        E[Pathfinding Algorithms]
-        F[3D Rendering Pipeline]
-        G[Camera System]
+    %% ===== CORE ENGINE =====
+    subgraph "Core Engine Components"
+        MAL[Main Application Loop]
+        GMS[Grid Management System]
+        PA[Pathfinding Algorithms]
+        RCS[Raycasting System]
+        CAM[Camera System]
     end
     
-    subgraph "Graphics Pipeline"
-        H[Vertex Processing]
-        I[Gouraud Shading]
-        J[Fragment Processing]
-        K[Minimap Rendering]
+    %% ===== GRAPHICS PIPELINE =====
+    subgraph "Graphics Rendering Pipeline"
+        RDR[3D Rendering Pipeline]
+        VP[Vertex Processing]
+        GS[Gouraud Shading]
+        FP[Fragment Processing]
+        MMR[Minimap Rendering]
     end
     
-    subgraph "Output"
-        L[3D Visualization]
-        M[Statistics Display]
-        N[User Feedback]
+    %% ===== OUTPUT LAYER =====
+    subgraph "Visual Output"
+        VIZ[3D Visualization]
+        STAT[Statistics Display]
+        FEED[User Feedback]
     end
     
-    A --> C
-    B --> C
-    C --> D
-    C --> E
-    C --> F
-    C --> G
-    D --> F
-    E --> F
-    G --> F
-    F --> H --> I --> J --> L
-    F --> K --> L
-    E --> M
-    C --> N
+    %% ===== CLEAN DATA FLOW =====
+    
+    %% Input to Main Loop
+    UI --> MAL
+    MI --> RCS
+    KI --> MAL
+    
+    %% Main Loop Coordination
+    MAL --> GMS
+    MAL --> PA
+    MAL --> RDR
+    MAL --> CAM
+    
+    %% Raycasting Dependencies
+    RCS --> GMS
+    CAM --> RCS
+    RCS --> MAL
+    
+    %% Pathfinding Data Flow
+    PA --> GMS
+    
+    %% Rendering Dependencies
+    GMS --> RDR
+    PA --> RDR
+    CAM --> RDR
+    
+    %% Graphics Pipeline Flow
+    RDR --> VP --> GS --> FP --> VIZ
+    RDR --> MMR --> VIZ
+    
+    %% Information Output
+    PA --> STAT
+    GMS --> STAT
+    MAL --> FEED
+    RCS --> FEED
+    
+    %% Styling for Clarity
+    style MAL fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style GMS fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style PA fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    style RCS fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style RDR fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
 **Key Components:**
